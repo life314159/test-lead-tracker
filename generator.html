@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>領先追蹤圖卡 - 轉播網址生成器</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0; padding: 40px 20px;
+      color: #333;
+    }
+    .card {
+      max-width: 650px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    h2 { margin-top: 0; color: #1a252f; text-align: center; font-size: 24px; }
+    p.subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 25px; }
+    
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; color: #2c3e50; }
+    input[type="text"], input[type="url"] {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid #ccc; border-radius: 6px;
+      font-size: 15px; transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, input[type="url"]:focus {
+      border-color: #3498db; outline: none;
+    }
+    
+    .team-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 15px;
+      align-items: center;
+    }
+    .color-picker-wrapper {
+      display: flex; align-items: center; gap: 10px;
+    }
+    input[type="color"] {
+      -webkit-appearance: none; border: none;
+      width: 40px; height: 40px;
+      border-radius: 6px; cursor: pointer;
+      background: none;
+    }
+
+    button.btn-generate {
+      width: 100%; padding: 12px;
+      background-color: #27ae60; color: white;
+      border: none; border-radius: 6px;
+      font-size: 16px; font-weight: bold;
+      cursor: pointer; transition: background 0.2s;
+    }
+    button.btn-generate:hover { background-color: #219150; }
+
+    .result-box {
+      margin-top: 25px; padding: 20px;
+      background: #f8f9fa; border: 1px solid #e9ecef;
+      border-radius: 8px; display: none;
+    }
+    .result-box label { color: #27ae60; }
+    textarea {
+      width: 100%; height: 80px;
+      padding: 10px; border: 1px solid #ced4da;
+      border-radius: 6px; font-family: monospace;
+      font-size: 13px; resize: none; margin-bottom: 15px;
+    }
+    .btn-group { display: flex; gap: 10px; }
+    .btn-action {
+      flex: 1; padding: 10px;
+      border: none; border-radius: 6px;
+      font-size: 14px; font-weight: bold; cursor: pointer;
+    }
+    .btn-copy { background-color: #3498db; color: white; }
+    .btn-copy:hover { background-color: #2980b9; }
+    .btn-open { background-color: #e67e22; color: white; }
+    .btn-open:hover { background-color: #d35400; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>領先追蹤圖卡 網址生成器</h2>
+  <p class="subtitle">填入當場比賽資訊，一鍵生成提供給 vMix / 字幕機的轉播網址</p>
+
+  <form id="urlForm">
+    <!-- API 網址 -->
+    <div class="form-group">
+      <label for="apiUrl">Play-by-play API 網址</label>
+      <input type="url" id="apiUrl" placeholder="https://api.yourleague.com/api/opendata/GetPlayByPlayShow" required>
+    </div>
+
+    <!-- 主隊資訊 -->
+    <div class="form-group">
+      <label>主隊設定 (Home Team)</label>
+      <div class="team-row">
+        <input type="text" id="homeName" placeholder="例如：政治大學" required>
+        <div class="color-picker-wrapper">
+          <input type="color" id="homeColor" value="#14259B">
+          <span id="homeColorHex">#14259B</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 客隊資訊 -->
+    <div class="form-group">
+      <label>客隊設定 (Away Team)</label>
+      <div class="team-row">
+        <input type="text" id="awayName" placeholder="例如：國立體大" required>
+        <div class="color-picker-wrapper">
+          <input type="color" id="awayColor" value="#EC6C00">
+          <span id="awayColorHex">#EC6C00</span>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-generate">產生轉播網址</button>
+  </form>
+
+  <!-- 產出結果區 -->
+  <div class="result-box" id="resultBox">
+    <label>生成的轉播網址 (適用於 vMix / CharacterWorks / OBS)</label>
+    <textarea id="outputUrl" readonly></textarea>
+    <div class="btn-group">
+      <button class="btn-action btn-copy" id="btnCopy">複製網址</button>
+      <button class="btn-action btn-open" id="btnOpen">新分頁測試</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 色碼同步顯示
+  document.getElementById('homeColor').addEventListener('input', e => {
+    document.getElementById('homeColorHex').innerText = e.target.value.toUpperCase();
+  });
+  document.getElementById('awayColor').addEventListener('input', e => {
+    document.getElementById('awayColorHex').innerText = e.target.value.toUpperCase();
+  });
+
+  // 表單送出處理
+  document.getElementById('urlForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // 自動取得當前網站的網域基礎 URL (連結到同專案下的 index.html)
+    const baseUrl = window.location.origin + window.location.pathname.replace('generator.html', '');
+
+    const api = encodeURIComponent(document.getElementById('apiUrl').value.trim());
+    const homeName = encodeURIComponent(document.getElementById('homeName').value.trim());
+    const awayName = encodeURIComponent(document.getElementById('awayName').value.trim());
+    
+    // 將 # 號轉為 %23
+    const homeColor = document.getElementById('homeColor').value.replace('#', '%23');
+    const awayColor = document.getElementById('awayColor').value.replace('#', '%23');
+
+    // 組合完整網址
+    const finalUrl = `${baseUrl}?api=${api}&homeName=${homeName}&awayName=${awayName}&homeColor=${homeColor}&awayColor=${awayColor}`;
+
+    // 顯示結果
+    document.getElementById('outputUrl').value = finalUrl;
+    document.getElementById('resultBox').style.display = 'block';
+  });
+
+  // 複製按鈕
+  document.getElementById('btnCopy').addEventListener('click', function() {
+    const outputText = document.getElementById('outputUrl');
+    outputText.select();
+    document.execCommand('copy');
+    alert('已成功複製網址到剪貼簿！');
+  });
+
+  // 新分頁開啟測試
+  document.getElementById('btnOpen').addEventListener('click', function() {
+    const finalUrl = document.getElementById('outputUrl').value;
+    if (finalUrl) {
+      window.open(finalUrl, '_blank');
+    }
+  });
+</script>
+
+</body>
+</html>
