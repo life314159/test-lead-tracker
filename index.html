@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>Basketball Lead Tracker Overlay</title>
+  <!-- 引入 Chart.js 繪圖庫 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* 轉播鏡面核心：背景完全透明 */
+    body, html {
+      margin: 0; padding: 0;
+      width: 1920px; height: 1080px;
+      background-color: transparent;
+      font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      overflow: hidden;
+      color: #333;
+    }
+    .container {
+      width: 1600px; margin: 40px auto;
+      background: rgba(245, 245, 245, 0.95);
+      border-radius: 12px; padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .header { text-align: center; font-size: 32px; font-weight: bold; color: #2C3E50; margin-bottom: 10px; }
+    .legend { display: flex; justify-content: center; gap: 40px; font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+    .legend-item { display: flex; align-items: center; gap: 10px; }
+    .dot { width: 16px; height: 16px; border-radius: 50%; display: inline-block; }
+    
+    /* 圖表區域 */
+    .chart-box { height: 400px; position: relative; }
+
+    /* 下方四大數據網格 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr 1fr;
+      row-gap: 15px; margin-top: 25px;
+      text-align: center; align-items: center;
+    }
+    .stat-val { font-size: 36px; font-weight: bold; color: #111; }
+    .stat-label { font-size: 20px; font-weight: bold; color: #666; }
+    .lead-changes-box { grid-column: 1 / span 3; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">LEAD TRACKER 領先追蹤器</div>
+  <div class="legend">
+    <div class="legend-item"><span class="dot" id="dot-home"></span><span id="name-home">主隊</span></div>
+    <div class="legend-item"><span class="dot" id="dot-away"></span><span id="name-away">客隊</span></div>
+  </div>
+
+  <div class="chart-box">
+    <canvas id="leadChart"></canvas>
+  </div>
+
+  <!-- 下方四大統計數字 -->
+  <div class="stats-grid">
+    <div class="stat-val" id="val-lead-home">0</div>
+    <div class="stat-label">Biggest Lead</div>
+    <div class="stat-val" id="val-lead-away">0</div>
+
+    <div class="stat-val" id="val-run-home">0-0</div>
+    <div class="stat-label">Biggest Scoring Run</div>
+    <div class="stat-val" id="val-run-away">0-0</div>
+
+    <div class="stat-val" id="val-time-home">00:00</div>
+    <div class="stat-label">Time Leading</div>
+    <div class="stat-val" id="val-time-away">00:00</div>
+
+    <div class="lead-changes-box">
+      <div class="stat-val" id="val-lead-changes">0</div>
+      <div class="stat-label">Lead Changes</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 1. 讀取 URL 參數（方便自訂隊名與顏色）
+  const urlParams = new URLSearchParams(window.location.search);
+  const API_URL = urlParams.get('api') || 'api/opendata/GetPlayByPlayShow'; // API網址
+  const CONFIG = {
+    homeName: urlParams.get('homeName') || '臺南台鋼獵鷹',
+    awayName: urlParams.get('awayName') || '桃園璞園領航猿',
+    homeColor: urlParams.get('homeColor') || '#D92B2B', // 紅色
+    awayColor: urlParams.get('awayColor') || '#E65100'  // 橘色
+  };
+
+  // 初始化 DOM 標籤顏色與隊名
+  document.getElementById('name-home').innerText = CONFIG.homeName;
+  document.getElementById('name-away').innerText = CONFIG.awayName;
+  document.getElementById('dot-home').style.backgroundColor = CONFIG.homeColor;
+  document.getElementById('dot-away').style.backgroundColor = CONFIG.awayColor;
+
+  // 2. 初始化 Chart.js 階梯圖
+  const ctx = document.getElementById('leadChart').getContext('2d');
+  const leadChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: CONFIG.homeName,
+          data: [],
+          stepped: 'before',
+          backgroundColor: CONFIG.homeColor,
+          fill: { target: 'origin', above: CONFIG.homeColor, below: 'transparent' },
+          borderColor: 'transparent',
+          pointRadius: 0
+        },
+        {
+          label: CONFIG.awayName,
+          data: [],
+          stepped: 'before',
+          backgroundColor: CONFIG.awayColor,
+          fill: { target: 'origin', above: 'transparent', below: CONFIG.awayColor },
+          borderColor: 'transparent',
+          pointRadius: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 800 },
+      scales: {
+        x: {
+          type: 'linear', min: 0, max: 2880,
+          ticks: {
+            callback: val => {
+              if (val === 720) return 'Q1';
+              if (val === 1440) return 'Q2';
+              if (val === 2160) return 'Q3';
+              if (val === 2880) return 'Q4';
+              return '';
+            },
+            font: { size: 16, weight: 'bold' }
+          },
+          grid: { color: ctx => [720, 1440, 2160].includes(ctx.tick.value) ? '#BBB' : 'transparent' }
+        },
+        y: {
+          ticks: {
+            callback: val => Math.abs(val), // Y軸顯示絕對值
+            font: { size: 14, weight: 'bold' }
+          },
+          grid: { color: '#E0E0E0' }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // 輔助函式：時間轉秒數 (Q1-Q4)
+  function parseToElapsedSec(qStr, timeStr) {
+    if (!timeStr || !timeStr.includes(':')) return 0;
+    const [m, s] = timeStr.split(':').map(Number);
+    const remainingInQ = m * 60 + s;
+    const qNum = parseInt(qStr.replace('Q', '')) || 1;
+    return (qNum - 1) * 720 + (720 - remainingInQ);
+  }
+
+  // 輔助函式：秒數轉 MM:SS
+  function formatMMSS(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  // 3. 核心抓取與計算邏輯
+  async function fetchAndCalculate() {
+    try {
+      const res = await fetch(API_URL);
+      const plays = await res.json();
+      if (!plays || plays.length === 0) return;
+
+      let chartPoints = [{ x: 0, y: 0 }];
+      let maxLeadHome = 0, maxLeadAway = 0;
+      let timeLeadingHome = 0, timeLeadingAway = 0;
+      let leadChanges = 0;
+      let prevLeadState = 0; // 1: Home, -1: Away, 0: Tie
+
+      let runHome = 0, runAway = 0, maxRunHome = 0, maxRunAway = 0;
+      let prevHomeScore = 0, prevAwayScore = 0;
+
+      for (let i = 0; i < plays.length; i++) {
+        const p = plays[i];
+        const hScore = parseInt(p.home_team_score) || 0;
+        const aScore = parseInt(p.away_team_score) || 0;
+        const diff = hScore - aScore;
+        const sec = parseToElapsedSec(p.quarter, p.time);
+
+        // 圖表點位
+        chartPoints.push({ x: sec, y: diff });
+
+        // 1. Biggest Lead
+        if (diff > maxLeadHome) maxLeadHome = diff;
+        if (-diff > maxLeadAway) maxLeadAway = -diff;
+
+        // 2. Lead Changes
+        let currentState = diff > 0 ? 1 : (diff < 0 ? -1 : 0);
+        if (currentState !== 0 && prevLeadState !== 0 && currentState !== prevLeadState) {
+          leadChanges++;
+        }
+        if (currentState !== 0) prevLeadState = currentState;
+
+        // 3. Time Leading
+        const nextSec = (i < plays.length - 1) ? parseToElapsedSec(plays[i+1].quarter, plays[i+1].time) : sec;
+        const duration = nextSec - sec;
+        if (diff > 0) timeLeadingHome += duration;
+        else if (diff < 0) timeLeadingAway += duration;
+
+        // 4. Scoring Runs
+        const dH = hScore - prevHomeScore;
+        const dA = aScore - prevAwayScore;
+
+        if (dH > 0) {
+          runHome += dH; runAway = 0;
+          if (runHome > maxRunHome) maxRunHome = runHome;
+        }
+        if (dA > 0) {
+          runAway += dA; runHome = 0;
+          if (runAway > maxRunAway) maxRunAway = runAway;
+        }
+        prevHomeScore = hScore; prevAwayScore = aScore;
+      }
+
+      // 更新圖表
+      leadChart.data.datasets[0].data = chartPoints;
+      leadChart.data.datasets[1].data = chartPoints;
+      leadChart.update();
+
+      // 更新畫面數字
+      document.getElementById('val-lead-home').innerText = maxLeadHome;
+      document.getElementById('val-lead-away').innerText = maxLeadAway;
+      document.getElementById('val-run-home').innerText = `${maxRunHome}-0`;
+      document.getElementById('val-run-away').innerText = `${maxRunAway}-0`;
+      document.getElementById('val-time-home').innerText = formatMMSS(timeLeadingHome);
+      document.getElementById('val-time-away').innerText = formatMMSS(timeLeadingAway);
+      document.getElementById('val-lead-changes').innerText = leadChanges;
+
+    } catch (err) {
+      console.error("API 載入失敗或數據處理異常:", err);
+    }
+  }
+
+  // 開頭執行並設定每 3 秒自動輪巡更新一次
+  fetchAndCalculate();
+  setInterval(fetchAndCalculate, 3000);
+</script>
+
+</body>
+</html>
