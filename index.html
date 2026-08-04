@@ -79,8 +79,8 @@
   const urlParams = new URLSearchParams(window.location.search);
   const API_URL = urlParams.get('api') || 'api/opendata/GetPlayByPlayShow'; // API網址
   const CONFIG = {
-    homeName: urlParams.get('homeName') || '臺南台鋼獵鷹',
-    awayName: urlParams.get('awayName') || '桃園璞園領航猿',
+    homeName: urlParams.get('homeName') || '主隊',
+    awayName: urlParams.get('awayName') || '客隊',
     homeColor: urlParams.get('homeColor') || '#D92B2B', // 紅色
     awayColor: urlParams.get('awayColor') || '#E65100'  // 橘色
   };
