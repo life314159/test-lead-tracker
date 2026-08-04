@@ -125,6 +125,10 @@
       scales: {
         x: {
           type: 'linear', min: 0, max: 2880,
+          afterBuildTicks: function(axis) {
+          // 強制 X 軸固定產生這 4 個時間點的刻度標籤
+          axis.ticks = [720, 1440, 2160, 2880].map(v => ({ value: v }));
+          },
           ticks: {
             callback: val => {
               if (val === 720) return 'Q1';
