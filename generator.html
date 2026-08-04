@@ -25,12 +25,13 @@
     
     .form-group { margin-bottom: 20px; }
     label { display: block; font-weight: 600; margin-bottom: 8px; color: #2c3e50; }
-    input[type="text"], input[type="url"] {
+    input[type="text"], input[type="url"], select {
       width: 100%; padding: 10px 12px;
       border: 1px solid #ccc; border-radius: 6px;
       font-size: 15px; transition: border-color 0.2s;
+      background-color: #fff;
     }
-    input[type="text"]:focus, input[type="url"]:focus {
+    input[type="text"]:focus, input[type="url"]:focus, select:focus {
       border-color: #3498db; outline: none;
     }
     
@@ -87,7 +88,7 @@
 
 <div class="card">
   <h2>領先追蹤圖卡 網址生成器</h2>
-  <p class="subtitle">填入當場比賽資訊，一鍵生成提供給 vMix / 字幕機的轉播網址</p>
+  <p class="subtitle">選擇比賽球隊與 API，自動帶出代表色並生成轉播網址</p>
 
   <form id="urlForm">
     <!-- API 網址 -->
@@ -98,9 +99,10 @@
 
     <!-- 主隊資訊 -->
     <div class="form-group">
-      <label>主隊設定 (Home Team)</label>
+      <label for="homeSelect">主隊設定 (Home Team)</label>
       <div class="team-row">
-        <input type="text" id="homeName" placeholder="例如：政治大學" required>
+        <!-- 改為下拉選單 -->
+        <select id="homeSelect" required></select>
         <div class="color-picker-wrapper">
           <input type="color" id="homeColor" value="#14259B">
           <span id="homeColorHex">#14259B</span>
@@ -110,9 +112,10 @@
 
     <!-- 客隊資訊 -->
     <div class="form-group">
-      <label>客隊設定 (Away Team)</label>
+      <label for="awaySelect">客隊設定 (Away Team)</label>
       <div class="team-row">
-        <input type="text" id="awayName" placeholder="例如：國立體大" required>
+        <!-- 改為下拉選單 -->
+        <select id="awaySelect" required></select>
         <div class="color-picker-wrapper">
           <input type="color" id="awayColor" value="#EC6C00">
           <span id="awayColorHex">#EC6C00</span>
@@ -135,28 +138,91 @@
 </div>
 
 <script>
-  // 色碼同步顯示
-  document.getElementById('homeColor').addEventListener('input', e => {
-    document.getElementById('homeColorHex').innerText = e.target.value.toUpperCase();
+  // 1. 隊名與代表色對照表（你可以自由在此新增/修改學校與 HEX 色碼）
+  const TEAM_PRESETS = {
+    "政治大學": "#14259B",  // 深藍
+    "國立體大": "#EC6C00",  // 橘色
+    "健行科大": "#0080FF",  // 寶藍
+    "世新大學": "#D32F2F",  // 紅色
+    "輔仁大學": "#004B87",  // 藍色
+    "臺灣師大": "#7B1FA2",  // 紫色
+    "文化大學": "#388E3C",  // 綠色
+    "虎尾科大": "#1A237E",  // 藏青
+    "臺北市大": "#F57C00",  // 亮橘
+    "臺灣體大": "#0097A7",  // 青藍
+    "高雄師大": "#C2185B",  // 桃紅
+    "臺灣大學": "#5D4037"   // 棕色
+  };
+
+  const homeSelect = document.getElementById('homeSelect');
+  const awaySelect = document.getElementById('awaySelect');
+  const homeColorInput = document.getElementById('homeColor');
+  const awayColorInput = document.getElementById('awayColor');
+  const homeColorHex = document.getElementById('homeColorHex');
+  const awayColorHex = document.getElementById('awayColorHex');
+
+  // 2. 自動初始化下拉選單選項
+  function initTeamSelects() {
+    let optionsHtml = '<option value="">-- 請選擇球隊 --</option>';
+    for (const team in TEAM_PRESETS) {
+      optionsHtml += `<option value="${team}">${team}</option>`;
+    }
+    
+    homeSelect.innerHTML = optionsHtml;
+    awaySelect.innerHTML = optionsHtml;
+
+    // 預設選取政治大學與國立體大
+    homeSelect.value = "政治大學";
+    awaySelect.value = "國立體大";
+    updateHomeColor();
+    updateAwayColor();
+  }
+
+  // 3. 顏色更新邏輯
+  function updateHomeColor() {
+    const selectedTeam = homeSelect.value;
+    if (TEAM_PRESETS[selectedTeam]) {
+      homeColorInput.value = TEAM_PRESETS[selectedTeam];
+      homeColorHex.innerText = TEAM_PRESETS[selectedTeam].toUpperCase();
+    }
+  }
+
+  function updateAwayColor() {
+    const selectedTeam = awaySelect.value;
+    if (TEAM_PRESETS[selectedTeam]) {
+      awayColorInput.value = TEAM_PRESETS[selectedTeam];
+      awayColorHex.innerText = TEAM_PRESETS[selectedTeam].toUpperCase();
+    }
+  }
+
+  // 監聽下拉選單切換事件
+  homeSelect.addEventListener('change', updateHomeColor);
+  awaySelect.addEventListener('change', updateAwayColor);
+
+  // 允許使用者手動調色盤微調，同步顯示色碼
+  homeColorInput.addEventListener('input', e => {
+    homeColorHex.innerText = e.target.value.toUpperCase();
   });
-  document.getElementById('awayColor').addEventListener('input', e => {
-    document.getElementById('awayColorHex').innerText = e.target.value.toUpperCase();
+  awayColorInput.addEventListener('input', e => {
+    awayColorHex.innerText = e.target.value.toUpperCase();
   });
 
-  // 表單送出處理
+  // 初始化選單
+  initTeamSelects();
+
+  // 4. 表單送出處理
   document.getElementById('urlForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    // 自動取得當前網站的網域基礎 URL (連結到同專案下的 index.html)
     const baseUrl = window.location.origin + window.location.pathname.replace('generator.html', '');
 
     const api = encodeURIComponent(document.getElementById('apiUrl').value.trim());
-    const homeName = encodeURIComponent(document.getElementById('homeName').value.trim());
-    const awayName = encodeURIComponent(document.getElementById('awayName').value.trim());
+    const homeName = encodeURIComponent(homeSelect.value.trim());
+    const awayName = encodeURIComponent(awaySelect.value.trim());
     
-    // 將 # 號轉為 %23
-    const homeColor = document.getElementById('homeColor').value.replace('#', '%23');
-    const awayColor = document.getElementById('awayColor').value.replace('#', '%23');
+    // 將 # 號轉為網址標準的 %23
+    const homeColor = homeColorInput.value.replace('#', '%23');
+    const awayColor = awayColorInput.value.replace('#', '%23');
 
     // 組合完整網址
     const finalUrl = `${baseUrl}?api=${api}&homeName=${homeName}&awayName=${awayName}&homeColor=${homeColor}&awayColor=${awayColor}`;
@@ -166,7 +232,7 @@
     document.getElementById('resultBox').style.display = 'block';
   });
 
-  // 複製按鈕
+  // 5. 複製與測試按鈕
   document.getElementById('btnCopy').addEventListener('click', function() {
     const outputText = document.getElementById('outputUrl');
     outputText.select();
@@ -174,7 +240,6 @@
     alert('已成功複製網址到剪貼簿！');
   });
 
-  // 新分頁開啟測試
   document.getElementById('btnOpen').addEventListener('click', function() {
     const finalUrl = document.getElementById('outputUrl').value;
     if (finalUrl) {
