@@ -76,9 +76,9 @@
 </div>
 
 <script>
-// 1. 解析網址 URL 參數
-const urlParams = new URLSearchParams(window.location.search);
-const gameId = urlParams.get('gameId'); // 改為讀取 gameId
+  // 1. 解析網址 URL 參數
+  const urlParams = new URLSearchParams(window.location.search);
+  const gameId = urlParams.get('gameId');
 
   const CONFIG = {
     homeName: urlParams.get('homeName') || '政治大學',
@@ -235,121 +235,121 @@ const gameId = urlParams.get('gameId'); // 改為讀取 gameId
   }
 
   // 4. 數據抓取控制機制
-async function loadData() {
-  if (gameId) {
-    try {
-      // 改為請求自己的 Vercel 後端代理 API
-      const res = await fetch(`/api/get-play-by-play?gameId=${gameId}`);
-      const plays = await res.json();
-      processAndRenderData(plays);
-    } catch (err) {
-      console.error("API 載入失敗:", err);
-    }
-  } else {
-    // 若沒有帶入 gameId，則自動載入測試用假資料 (Demo Mode)
-const demoPlayByPlay = [
-  { quarter: 'Q1', time: '12:00', home_team_score: 0, away_team_score: 0 },
-  { quarter: 'Q1', time: '11:22', home_team_score: 3, away_team_score: 0 },
-  { quarter: 'Q1', time: '10:42', home_team_score: 5, away_team_score: 0 },
-  { quarter: 'Q1', time: '10:23', home_team_score: 5, away_team_score: 2 },
-  { quarter: 'Q1', time: '09:55', home_team_score: 7, away_team_score: 2 },
-  { quarter: 'Q1', time: '09:49', home_team_score: 7, away_team_score: 5 },
-  { quarter: 'Q1', time: '08:32', home_team_score: 9, away_team_score: 5 },
-  { quarter: 'Q1', time: '07:45', home_team_score: 11, away_team_score: 5 },
-  { quarter: 'Q1', time: '07:23', home_team_score: 13, away_team_score: 5 },
-  { quarter: 'Q1', time: '05:59', home_team_score: 13, away_team_score: 7 },
-  { quarter: 'Q1', time: '05:23', home_team_score: 13, away_team_score: 9 },
-  { quarter: 'Q1', time: '04:58', home_team_score: 15, away_team_score: 9 },
-  { quarter: 'Q1', time: '04:27', home_team_score: 17, away_team_score: 9 },
-  { quarter: 'Q1', time: '04:14', home_team_score: 17, away_team_score: 12 },
-  { quarter: 'Q1', time: '02:52', home_team_score: 17, away_team_score: 13 },
-  { quarter: 'Q1', time: '02:52', home_team_score: 17, away_team_score: 14 },
-  { quarter: 'Q1', time: '02:36', home_team_score: 17, away_team_score: 16 },
-  { quarter: 'Q1', time: '02:14', home_team_score: 19, away_team_score: 16 },
-  { quarter: 'Q1', time: '01:49', home_team_score: 19, away_team_score: 18 },
-  { quarter: 'Q1', time: '00:20', home_team_score: 21, away_team_score: 18 },
-  { quarter: 'Q2', time: '11:27', home_team_score: 24, away_team_score: 18 },
-  { quarter: 'Q2', time: '11:13', home_team_score: 24, away_team_score: 20 },
-  { quarter: 'Q2', time: '10:47', home_team_score: 27, away_team_score: 20 },
-  { quarter: 'Q2', time: '10:20', home_team_score: 27, away_team_score: 22 },
-  { quarter: 'Q2', time: '10:09', home_team_score: 30, away_team_score: 22 },
-  { quarter: 'Q2', time: '09:45', home_team_score: 30, away_team_score: 24 },
-  { quarter: 'Q2', time: '09:20', home_team_score: 32, away_team_score: 24 },
-  { quarter: 'Q2', time: '08:26', home_team_score: 32, away_team_score: 26 },
-  { quarter: 'Q2', time: '07:50', home_team_score: 34, away_team_score: 26 },
-  { quarter: 'Q2', time: '06:38', home_team_score: 36, away_team_score: 26 },
-  { quarter: 'Q2', time: '06:38', home_team_score: 37, away_team_score: 26 },
-  { quarter: 'Q2', time: '06:09', home_team_score: 40, away_team_score: 26 },
-  { quarter: 'Q2', time: '06:00', home_team_score: 40, away_team_score: 29 },
-  { quarter: 'Q2', time: '05:05', home_team_score: 40, away_team_score: 30 },
-  { quarter: 'Q2', time: '05:05', home_team_score: 40, away_team_score: 31 },
-  { quarter: 'Q2', time: '04:37', home_team_score: 42, away_team_score: 31 },
-  { quarter: 'Q2', time: '04:32', home_team_score: 42, away_team_score: 32 },
-  { quarter: 'Q2', time: '02:49', home_team_score: 44, away_team_score: 32 },
-  { quarter: 'Q2', time: '02:42', home_team_score: 44, away_team_score: 33 },
-  { quarter: 'Q2', time: '01:49', home_team_score: 47, away_team_score: 33 },
-  { quarter: 'Q2', time: '01:21', home_team_score: 47, away_team_score: 35 },
-  { quarter: 'Q2', time: '01:04', home_team_score: 48, away_team_score: 35 },
-  { quarter: 'Q2', time: '01:04', home_team_score: 49, away_team_score: 35 },
-  { quarter: 'Q2', time: '00:24', home_team_score: 49, away_team_score: 37 },
-  { quarter: 'Q3', time: '11:20', home_team_score: 49, away_team_score: 39 },
-  { quarter: 'Q3', time: '10:37', home_team_score: 51, away_team_score: 39 },
-  { quarter: 'Q3', time: '10:20', home_team_score: 51, away_team_score: 42 },
-  { quarter: 'Q3', time: '09:53', home_team_score: 54, away_team_score: 42 },
-  { quarter: 'Q3', time: '08:48', home_team_score: 54, away_team_score: 44 },
-  { quarter: 'Q3', time: '08:04', home_team_score: 54, away_team_score: 46 },
-  { quarter: 'Q3', time: '07:38', home_team_score: 56, away_team_score: 46 },
-  { quarter: 'Q3', time: '07:25', home_team_score: 56, away_team_score: 49 },
-  { quarter: 'Q3', time: '07:10', home_team_score: 59, away_team_score: 49 },
-  { quarter: 'Q3', time: '06:58', home_team_score: 59, away_team_score: 51 },
-  { quarter: 'Q3', time: '05:57', home_team_score: 59, away_team_score: 54 },
-  { quarter: 'Q3', time: '05:23', home_team_score: 59, away_team_score: 56 },
-  { quarter: 'Q3', time: '04:57', home_team_score: 59, away_team_score: 59 },
-  { quarter: 'Q3', time: '04:21', home_team_score: 59, away_team_score: 61 },
-  { quarter: 'Q3', time: '03:26', home_team_score: 62, away_team_score: 61 },
-  { quarter: 'Q3', time: '02:56', home_team_score: 62, away_team_score: 64 },
-  { quarter: 'Q3', time: '02:37', home_team_score: 64, away_team_score: 64 },
-  { quarter: 'Q3', time: '02:32', home_team_score: 64, away_team_score: 65 },
-  { quarter: 'Q3', time: '02:32', home_team_score: 64, away_team_score: 66 },
-  { quarter: 'Q3', time: '02:00', home_team_score: 64, away_team_score: 68 },
-  { quarter: 'Q3', time: '01:38', home_team_score: 64, away_team_score: 70 },
-  { quarter: 'Q3', time: '00:27', home_team_score: 65, away_team_score: 70 },
-  { quarter: 'Q3', time: '00:27', home_team_score: 66, away_team_score: 70 },
-  { quarter: 'Q4', time: '11:21', home_team_score: 68, away_team_score: 70 },
-  { quarter: 'Q4', time: '10:52', home_team_score: 69, away_team_score: 70 },
-  { quarter: 'Q4', time: '10:52', home_team_score: 70, away_team_score: 70 },
-  { quarter: 'Q4', time: '10:16', home_team_score: 72, away_team_score: 70 },
-  { quarter: 'Q4', time: '09:47', home_team_score: 72, away_team_score: 73 },
-  { quarter: 'Q4', time: '09:41', home_team_score: 74, away_team_score: 73 },
-  { quarter: 'Q4', time: '09:05', home_team_score: 74, away_team_score: 75 },
-  { quarter: 'Q4', time: '08:46', home_team_score: 76, away_team_score: 75 },
-  { quarter: 'Q4', time: '08:36', home_team_score: 76, away_team_score: 77 },
-  { quarter: 'Q4', time: '07:39', home_team_score: 79, away_team_score: 77 },
-  { quarter: 'Q4', time: '06:19', home_team_score: 79, away_team_score: 80 },
-  { quarter: 'Q4', time: '05:43', home_team_score: 79, away_team_score: 82 },
-  { quarter: 'Q4', time: '05:13', home_team_score: 79, away_team_score: 83 },
-  { quarter: 'Q4', time: '04:57', home_team_score: 81, away_team_score: 83 },
-  { quarter: 'Q4', time: '03:10', home_team_score: 81, away_team_score: 85 },
-  { quarter: 'Q4', time: '03:04', home_team_score: 82, away_team_score: 85 },
-  { quarter: 'Q4', time: '02:45', home_team_score: 84, away_team_score: 85 },
-  { quarter: 'Q4', time: '02:00', home_team_score: 84, away_team_score: 87 },
-  { quarter: 'Q4', time: '01:40', home_team_score: 85, away_team_score: 87 },
-  { quarter: 'Q4', time: '01:40', home_team_score: 86, away_team_score: 87 },
-  { quarter: 'Q4', time: '00:45', home_team_score: 86, away_team_score: 88 },
-  { quarter: 'Q4', time: '00:45', home_team_score: 86, away_team_score: 89 },
-  { quarter: 'Q4', time: '00:45', home_team_score: 86, away_team_score: 90 },
-  { quarter: 'Q4', time: '00:33', home_team_score: 89, away_team_score: 90 },
-  { quarter: 'Q4', time: '00:03', home_team_score: 89, away_team_score: 91 }
-];
+  async function loadData() {
+    if (gameId) {
+      try {
+        // 改為請求自己的 Vercel 後端代理 API
+        const res = await fetch(`/api/get-play-by-play?gameId=${gameId}`);
+        const plays = await res.json();
+        processAndRenderData(plays);
+      } catch (err) {
+        console.error("API 載入失敗:", err);
+      }
+    } else {
+      // 若沒有帶入 gameId，則自動載入測試用假資料 (Demo Mode)
+      const demoPlayByPlay = [
+        { quarter: 'Q1', time: '12:00', home_team_score: 0, away_team_score: 0 },
+        { quarter: 'Q1', time: '11:22', home_team_score: 3, away_team_score: 0 },
+        { quarter: 'Q1', time: '10:42', home_team_score: 5, away_team_score: 0 },
+        { quarter: 'Q1', time: '10:23', home_team_score: 5, away_team_score: 2 },
+        { quarter: 'Q1', time: '09:55', home_team_score: 7, away_team_score: 2 },
+        { quarter: 'Q1', time: '09:49', home_team_score: 7, away_team_score: 5 },
+        { quarter: 'Q1', time: '08:32', home_team_score: 9, away_team_score: 5 },
+        { quarter: 'Q1', time: '07:45', home_team_score: 11, away_team_score: 5 },
+        { quarter: 'Q1', time: '07:23', home_team_score: 13, away_team_score: 5 },
+        { quarter: 'Q1', time: '05:59', home_team_score: 13, away_team_score: 7 },
+        { quarter: 'Q1', time: '05:23', home_team_score: 13, away_team_score: 9 },
+        { quarter: 'Q1', time: '04:58', home_team_score: 15, away_team_score: 9 },
+        { quarter: 'Q1', time: '04:27', home_team_score: 17, away_team_score: 9 },
+        { quarter: 'Q1', time: '04:14', home_team_score: 17, away_team_score: 12 },
+        { quarter: 'Q1', time: '02:52', home_team_score: 17, away_team_score: 13 },
+        { quarter: 'Q1', time: '02:52', home_team_score: 17, away_team_score: 14 },
+        { quarter: 'Q1', time: '02:36', home_team_score: 17, away_team_score: 16 },
+        { quarter: 'Q1', time: '02:14', home_team_score: 19, away_team_score: 16 },
+        { quarter: 'Q1', time: '01:49', home_team_score: 19, away_team_score: 18 },
+        { quarter: 'Q1', time: '00:20', home_team_score: 21, away_team_score: 18 },
+        { quarter: 'Q2', time: '11:27', home_team_score: 24, away_team_score: 18 },
+        { quarter: 'Q2', time: '11:13', home_team_score: 24, away_team_score: 20 },
+        { quarter: 'Q2', time: '10:47', home_team_score: 27, away_team_score: 20 },
+        { quarter: 'Q2', time: '10:20', home_team_score: 27, away_team_score: 22 },
+        { quarter: 'Q2', time: '10:09', home_team_score: 30, away_team_score: 22 },
+        { quarter: 'Q2', time: '09:45', home_team_score: 30, away_team_score: 24 },
+        { quarter: 'Q2', time: '09:20', home_team_score: 32, away_team_score: 24 },
+        { quarter: 'Q2', time: '08:26', home_team_score: 32, away_team_score: 26 },
+        { quarter: 'Q2', time: '07:50', home_team_score: 34, away_team_score: 26 },
+        { quarter: 'Q2', time: '06:38', home_team_score: 36, away_team_score: 26 },
+        { quarter: 'Q2', time: '06:38', home_team_score: 37, away_team_score: 26 },
+        { quarter: 'Q2', time: '06:09', home_team_score: 40, away_team_score: 26 },
+        { quarter: 'Q2', time: '06:00', home_team_score: 40, away_team_score: 29 },
+        { quarter: 'Q2', time: '05:05', home_team_score: 40, away_team_score: 30 },
+        { quarter: 'Q2', time: '05:05', home_team_score: 40, away_team_score: 31 },
+        { quarter: 'Q2', time: '04:37', home_team_score: 42, away_team_score: 31 },
+        { quarter: 'Q2', time: '04:32', home_team_score: 42, away_team_score: 32 },
+        { quarter: 'Q2', time: '02:49', home_team_score: 44, away_team_score: 32 },
+        { quarter: 'Q2', time: '02:42', home_team_score: 44, away_team_score: 33 },
+        { quarter: 'Q2', time: '01:49', home_team_score: 47, away_team_score: 33 },
+        { quarter: 'Q2', time: '01:21', home_team_score: 47, away_team_score: 35 },
+        { quarter: 'Q2', time: '01:04', home_team_score: 48, away_team_score: 35 },
+        { quarter: 'Q2', time: '01:04', home_team_score: 49, away_team_score: 35 },
+        { quarter: 'Q2', time: '00:24', home_team_score: 49, away_team_score: 37 },
+        { quarter: 'Q3', time: '11:20', home_team_score: 49, away_team_score: 39 },
+        { quarter: 'Q3', time: '10:37', home_team_score: 51, away_team_score: 39 },
+        { quarter: 'Q3', time: '10:20', home_team_score: 51, away_team_score: 42 },
+        { quarter: 'Q3', time: '09:53', home_team_score: 54, away_team_score: 42 },
+        { quarter: 'Q3', time: '08:48', home_team_score: 54, away_team_score: 44 },
+        { quarter: 'Q3', time: '08:04', home_team_score: 54, away_team_score: 46 },
+        { quarter: 'Q3', time: '07:38', home_team_score: 56, away_team_score: 46 },
+        { quarter: 'Q3', time: '07:25', home_team_score: 56, away_team_score: 49 },
+        { quarter: 'Q3', time: '07:10', home_team_score: 59, away_team_score: 49 },
+        { quarter: 'Q3', time: '06:58', home_team_score: 59, away_team_score: 51 },
+        { quarter: 'Q3', time: '05:57', home_team_score: 59, away_team_score: 54 },
+        { quarter: 'Q3', time: '05:23', home_team_score: 59, away_team_score: 56 },
+        { quarter: 'Q3', time: '04:57', home_team_score: 59, away_team_score: 59 },
+        { quarter: 'Q3', time: '04:21', home_team_score: 59, away_team_score: 61 },
+        { quarter: 'Q3', time: '03:26', home_team_score: 62, away_team_score: 61 },
+        { quarter: 'Q3', time: '02:56', home_team_score: 62, away_team_score: 64 },
+        { quarter: 'Q3', time: '02:37', home_team_score: 64, away_team_score: 64 },
+        { quarter: 'Q3', time: '02:32', home_team_score: 64, away_team_score: 65 },
+        { quarter: 'Q3', time: '02:32', home_team_score: 64, away_team_score: 66 },
+        { quarter: 'Q3', time: '02:00', home_team_score: 64, away_team_score: 68 },
+        { quarter: 'Q3', time: '01:38', home_team_score: 64, away_team_score: 70 },
+        { quarter: 'Q3', time: '00:27', home_team_score: 65, away_team_score: 70 },
+        { quarter: 'Q3', time: '00:27', home_team_score: 66, away_team_score: 70 },
+        { quarter: 'Q4', time: '11:21', home_team_score: 68, away_team_score: 70 },
+        { quarter: 'Q4', time: '10:52', home_team_score: 69, away_team_score: 70 },
+        { quarter: 'Q4', time: '10:52', home_team_score: 70, away_team_score: 70 },
+        { quarter: 'Q4', time: '10:16', home_team_score: 72, away_team_score: 70 },
+        { quarter: 'Q4', time: '09:47', home_team_score: 72, away_team_score: 73 },
+        { quarter: 'Q4', time: '09:41', home_team_score: 74, away_team_score: 73 },
+        { quarter: 'Q4', time: '09:05', home_team_score: 74, away_team_score: 75 },
+        { quarter: 'Q4', time: '08:46', home_team_score: 76, away_team_score: 75 },
+        { quarter: 'Q4', time: '08:36', home_team_score: 76, away_team_score: 77 },
+        { quarter: 'Q4', time: '07:39', home_team_score: 79, away_team_score: 77 },
+        { quarter: 'Q4', time: '06:19', home_team_score: 79, away_team_score: 80 },
+        { quarter: 'Q4', time: '05:43', home_team_score: 79, away_team_score: 82 },
+        { quarter: 'Q4', time: '05:13', home_team_score: 79, away_team_score: 83 },
+        { quarter: 'Q4', time: '04:57', home_team_score: 81, away_team_score: 83 },
+        { quarter: 'Q4', time: '03:10', home_team_score: 81, away_team_score: 85 },
+        { quarter: 'Q4', time: '03:04', home_team_score: 82, away_team_score: 85 },
+        { quarter: 'Q4', time: '02:45', home_team_score: 84, away_team_score: 85 },
+        { quarter: 'Q4', time: '02:00', home_team_score: 84, away_team_score: 87 },
+        { quarter: 'Q4', time: '01:40', home_team_score: 85, away_team_score: 87 },
+        { quarter: 'Q4', time: '01:40', home_team_score: 86, away_team_score: 87 },
+        { quarter: 'Q4', time: '00:45', home_team_score: 86, away_team_score: 88 },
+        { quarter: 'Q4', time: '00:45', home_team_score: 86, away_team_score: 89 },
+        { quarter: 'Q4', time: '00:45', home_team_score: 86, away_team_score: 90 },
+        { quarter: 'Q4', time: '00:33', home_team_score: 89, away_team_score: 90 },
+        { quarter: 'Q4', time: '00:03', home_team_score: 89, away_team_score: 91 }
+      ];
       processAndRenderData(demoPlayByPlay);
     }
   }
 
- // 首次執行並設定自動更新
-loadData();
-if (gameId) {
-  setInterval(loadData, 3000); // 每 3 秒輪詢一次
-}
+  // 首次執行並設定自動更新
+  loadData();
+  if (gameId) {
+    setInterval(loadData, 3000); // 每 3 秒輪詢一次
+  }
 </script>
 
 </body>
