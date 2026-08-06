@@ -105,11 +105,11 @@
   <p class="subtitle">選擇比賽球隊與 API，自動帶出代表色並生成轉播網址</p>
 
   <form id="urlForm">
-    <!-- API 網址 -->
-    <div class="form-group">
-      <label for="apiUrl">Play-by-play API 網址 (選填，若留空將載入展示用假資料)</label>
-      <input type="url" id="apiUrl" placeholder="https://api.yourleague.com/api/opendata/GetPlayByPlayShow">
-    </div>
+   <!-- HTML 欄位修改 -->
+<div class="form-group">
+  <label for="gameId">比賽代碼 (Game ID)</label>
+  <input type="text" id="gameId" placeholder="例如：2026041201">
+</div>
 
     <!-- 主隊資訊 -->
     <div class="form-group">
@@ -228,31 +228,36 @@
 
   initTeamSelects();
 
-  // 3. 生成網址與更新預覽 Iframe
+  // 3. 表單送出處理 (更新為 gameId 版本)
   document.getElementById('urlForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
     const baseUrl = window.location.origin + window.location.pathname.replace('generator.html', '');
 
-    const rawApi = document.getElementById('apiUrl').value.trim();
-    const apiParam = rawApi ? `&api=${encodeURIComponent(rawApi)}` : '';
+    // 1. 取得 gameId 欄位數值
+    const gameId = document.getElementById('gameId').value.trim();
+    const gameIdParam = gameId ? `&gameId=${encodeURIComponent(gameId)}` : '';
+
+    // 2. 取得隊名與顏色
     const homeName = encodeURIComponent(homeSelect.value.trim());
     const awayName = encodeURIComponent(awaySelect.value.trim());
-    
     const homeColor = homeColorInput.value.replace('#', '%23');
     const awayColor = awayColorInput.value.replace('#', '%23');
 
-    // 組合網址
-    const finalUrl = `${baseUrl}?homeName=${homeName}&awayName=${awayName}&homeColor=${homeColor}&awayColor=${awayColor}${apiParam}`;
+    // 3. 組合最終轉播網址
+    const finalUrl = `${baseUrl}?homeName=${homeName}&awayName=${awayName}&homeColor=${homeColor}&awayColor=${awayColor}${gameIdParam}`;
 
-    // 顯示文字網址
+    // 4. 顯示結果並更新預覽框
     document.getElementById('outputUrl').value = finalUrl;
     document.getElementById('resultBox').style.display = 'block';
-
-    // 即時載入到預覽框架中
-    previewIframe.src = finalUrl;
+    
+    // 如果有 iframe 預覽框，同步更新預覽
+    const previewIframe = document.getElementById('previewIframe');
+    if (previewIframe) {
+      previewIframe.src = finalUrl;
+    }
   });
-
+  
   // 4. 按鈕處理
   document.getElementById('btnCopy').addEventListener('click', function() {
     const outputText = document.getElementById('outputUrl');
