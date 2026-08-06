@@ -77,34 +77,7 @@
 <script>
   // 1. 讀取 URL 參數（方便自訂隊名與顏色）
   const urlParams = new URLSearchParams(window.location.search);
-// 取得網址上的 api 參數
-const apiUrl = urlParams.get('api');
-
-if (apiUrl) {
-  // 如果有帶入 API 網址，就去抓真實資料
-  fetchData(apiUrl);
-} else {
-  // 如果沒有 API 網址，自動載入測試用假資料 (Demo Mode)
-  loadDemoData();
-}
-
-// 測試用假資料：模擬一場拉鋸戰的 Play-by-Play
-function loadDemoData() {
-  const demoPlayByPlay = [
-    { quarter: 'Q1', time: '10:00', home_team_score: 0, away_team_score: 0 },
-    { quarter: 'Q1', time: '07:30', home_team_score: 6, away_team_score: 2 },  // 主隊領先 +4
-    { quarter: 'Q1', time: '03:15', home_team_score: 10, away_team_score: 14 }, // 客隊反超 +4
-    { quarter: 'Q2', time: '08:00', home_team_score: 22, away_team_score: 20 }, // 主隊領先 +2
-    { quarter: 'Q2', time: '01:30', home_team_score: 30, away_team_score: 36 }, // 客隊領先 +6
-    { quarter: 'Q3', time: '06:45', home_team_score: 48, away_team_score: 42 }, // 主隊拉開 +6
-    { quarter: 'Q3', time: '00:30', home_team_score: 55, away_team_score: 55 }, // 平手 0
-    { quarter: 'Q4', time: '05:00', home_team_score: 68, away_team_score: 62 }, // 主隊領先 +6
-    { quarter: 'Q4', time: '00:00', home_team_score: 75, away_team_score: 71 }  // 主隊贏 4 分
-  ];
-  
-  // 呼叫原本寫好的圖表渲染與數據計算函式
-  renderChartAndStats(demoPlayByPlay);
-}
+  const API_URL = urlParams.get('api') || 'api/opendata/GetPlayByPlayShow'; // API網址
   const CONFIG = {
     homeName: urlParams.get('homeName') || '主隊',
     awayName: urlParams.get('awayName') || '客隊',
