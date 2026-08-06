@@ -76,9 +76,9 @@
 </div>
 
 <script>
-  // 1. 解析網址 URL 參數
-  const urlParams = new URLSearchParams(window.location.search);
-  const apiUrl = urlParams.get('api');
+// 1. 解析網址 URL 參數
+const urlParams = new URLSearchParams(window.location.search);
+const gameId = urlParams.get('gameId'); // 改為讀取 gameId
 
   const CONFIG = {
     homeName: urlParams.get('homeName') || '政治大學',
@@ -234,18 +234,19 @@
     document.getElementById('val-lead-changes').innerText = leadChanges;
   }
 
-  // 4. 抓取 API 或載入 Demo 數據控制機制
-  async function loadData() {
-    if (apiUrl) {
-      try {
-        const res = await fetch(apiUrl);
-        const plays = await res.json();
-        processAndRenderData(plays);
-      } catch (err) {
-        console.error("API 載入失敗:", err);
-      }
-    } else {
-      // Demo 假資料 (當無 API 網址時自動執行)
+  // 4. 數據抓取控制機制
+async function loadData() {
+  if (gameId) {
+    try {
+      // 改為請求自己的 Vercel 後端代理 API
+      const res = await fetch(`/api/get-play-by-play?gameId=${gameId}`);
+      const plays = await res.json();
+      processAndRenderData(plays);
+    } catch (err) {
+      console.error("API 載入失敗:", err);
+    }
+  } else {
+    // 若沒有帶入 gameId，則自動載入測試用假資料 (Demo Mode)
 const demoPlayByPlay = [
   { quarter: 'Q1', time: '12:00', home_team_score: 0, away_team_score: 0 },
   { quarter: 'Q1', time: '11:22', home_team_score: 3, away_team_score: 0 },
@@ -344,11 +345,11 @@ const demoPlayByPlay = [
     }
   }
 
-  // 首次執行並設定自動更新
-  loadData();
-  if (apiUrl) {
-    setInterval(loadData, 3000);
-  }
+ // 首次執行並設定自動更新
+loadData();
+if (gameId) {
+  setInterval(loadData, 3000); // 每 3 秒輪詢一次
+}
 </script>
 
 </body>
