@@ -54,7 +54,7 @@
     <canvas id="leadChart"></canvas>
   </div>
 
-  <!-- 下方四大統計數字（改為中文） -->
+  <!-- 下方四大統計數字 -->
   <div class="stats-grid">
     <div class="stat-val" id="val-lead-home">0</div>
     <div class="stat-label">最大領先</div>
@@ -73,41 +73,18 @@
       <div class="stat-label">領先互換次數</div>
     </div>
   </div>
+</div>
 
 <script>
-// 取得網址上的 api 參數
-const apiUrl = urlParams.get('api');
+  // 1. 解析網址 URL 參數
+  const urlParams = new URLSearchParams(window.location.search);
+  const apiUrl = urlParams.get('api');
 
-if (apiUrl) {
-  // 如果有帶入 API 網址，就去抓真實資料
-  fetchData(apiUrl);
-} else {
-  // 如果沒有 API 網址，自動載入測試用假資料 (Demo Mode)
-  loadDemoData();
-}
-
-// 測試用假資料：模擬一場拉鋸戰的 Play-by-Play
-function loadDemoData() {
-  const demoPlayByPlay = [
-    { quarter: 'Q1', time: '10:00', home_team_score: 0, away_team_score: 0 },
-    { quarter: 'Q1', time: '07:30', home_team_score: 6, away_team_score: 2 },  // 主隊領先 +4
-    { quarter: 'Q1', time: '03:15', home_team_score: 10, away_team_score: 14 }, // 客隊反超 +4
-    { quarter: 'Q2', time: '08:00', home_team_score: 22, away_team_score: 20 }, // 主隊領先 +2
-    { quarter: 'Q2', time: '01:30', home_team_score: 30, away_team_score: 36 }, // 客隊領先 +6
-    { quarter: 'Q3', time: '06:45', home_team_score: 48, away_team_score: 42 }, // 主隊拉開 +6
-    { quarter: 'Q3', time: '00:30', home_team_score: 55, away_team_score: 55 }, // 平手 0
-    { quarter: 'Q4', time: '05:00', home_team_score: 68, away_team_score: 62 }, // 主隊領先 +6
-    { quarter: 'Q4', time: '00:00', home_team_score: 75, away_team_score: 71 }  // 主隊贏 4 分
-  ];
-  
-  // 呼叫原本寫好的圖表渲染與數據計算函式
-  renderChartAndStats(demoPlayByPlay);
-}
   const CONFIG = {
-    homeName: urlParams.get('homeName') || '主隊',
-    awayName: urlParams.get('awayName') || '客隊',
-    homeColor: urlParams.get('homeColor') || '#D92B2B', // 紅色
-    awayColor: urlParams.get('awayColor') || '#E65100'  // 橘色
+    homeName: urlParams.get('homeName') || '政治大學',
+    awayName: urlParams.get('awayName') || '國立體大',
+    homeColor: urlParams.get('homeColor') || '#14259B', // 深藍
+    awayColor: urlParams.get('awayColor') || '#EC6C00'  // 橘色
   };
 
   // 初始化 DOM 標籤顏色與隊名
@@ -150,8 +127,7 @@ function loadDemoData() {
         x: {
           type: 'linear', min: 0, max: 2880,
           afterBuildTicks: function(axis) {
-          // 強制 X 軸固定產生這 4 個時間點的刻度標籤
-          axis.ticks = [720, 1440, 2160, 2880].map(v => ({ value: v }));
+            axis.ticks = [720, 1440, 2160, 2880].map(v => ({ value: v }));
           },
           ticks: {
             callback: val => {
@@ -167,7 +143,7 @@ function loadDemoData() {
         },
         y: {
           ticks: {
-            callback: val => Math.abs(val), // Y軸顯示絕對值
+            callback: val => Math.abs(val),
             font: { size: 14, weight: 'bold' }
           },
           grid: { color: '#E0E0E0' }
@@ -193,86 +169,103 @@ function loadDemoData() {
     return `${m}:${s}`;
   }
 
-  // 3. 核心抓取與計算邏輯
-  async function fetchAndCalculate() {
-    try {
-      const res = await fetch(API_URL);
-      const plays = await res.json();
-      if (!plays || plays.length === 0) return;
+  // 3. 數據計算與渲染核心邏輯
+  function processAndRenderData(plays) {
+    if (!plays || plays.length === 0) return;
 
-      let chartPoints = [{ x: 0, y: 0 }];
-      let maxLeadHome = 0, maxLeadAway = 0;
-      let timeLeadingHome = 0, timeLeadingAway = 0;
-      let leadChanges = 0;
-      let prevLeadState = 0; // 1: Home, -1: Away, 0: Tie
+    let chartPoints = [{ x: 0, y: 0 }];
+    let maxLeadHome = 0, maxLeadAway = 0;
+    let timeLeadingHome = 0, timeLeadingAway = 0;
+    let leadChanges = 0;
+    let prevLeadState = 0;
 
-      let runHome = 0, runAway = 0, maxRunHome = 0, maxRunAway = 0;
-      let prevHomeScore = 0, prevAwayScore = 0;
+    let runHome = 0, runAway = 0, maxRunHome = 0, maxRunAway = 0;
+    let prevHomeScore = 0, prevAwayScore = 0;
 
-      for (let i = 0; i < plays.length; i++) {
-        const p = plays[i];
-        const hScore = parseInt(p.home_team_score) || 0;
-        const aScore = parseInt(p.away_team_score) || 0;
-        const diff = hScore - aScore;
-        const sec = parseToElapsedSec(p.quarter, p.time);
+    for (let i = 0; i < plays.length; i++) {
+      const p = plays[i];
+      const hScore = parseInt(p.home_team_score) || 0;
+      const aScore = parseInt(p.away_team_score) || 0;
+      const diff = hScore - aScore;
+      const sec = parseToElapsedSec(p.quarter, p.time);
 
-        // 圖表點位
-        chartPoints.push({ x: sec, y: diff });
+      chartPoints.push({ x: sec, y: diff });
 
-        // 1. Biggest Lead
-        if (diff > maxLeadHome) maxLeadHome = diff;
-        if (-diff > maxLeadAway) maxLeadAway = -diff;
+      if (diff > maxLeadHome) maxLeadHome = diff;
+      if (-diff > maxLeadAway) maxLeadAway = -diff;
 
-        // 2. Lead Changes
-        let currentState = diff > 0 ? 1 : (diff < 0 ? -1 : 0);
-        if (currentState !== 0 && prevLeadState !== 0 && currentState !== prevLeadState) {
-          leadChanges++;
-        }
-        if (currentState !== 0) prevLeadState = currentState;
-
-        // 3. Time Leading
-        const nextSec = (i < plays.length - 1) ? parseToElapsedSec(plays[i+1].quarter, plays[i+1].time) : sec;
-        const duration = nextSec - sec;
-        if (diff > 0) timeLeadingHome += duration;
-        else if (diff < 0) timeLeadingAway += duration;
-
-        // 4. Scoring Runs
-        const dH = hScore - prevHomeScore;
-        const dA = aScore - prevAwayScore;
-
-        if (dH > 0) {
-          runHome += dH; runAway = 0;
-          if (runHome > maxRunHome) maxRunHome = runHome;
-        }
-        if (dA > 0) {
-          runAway += dA; runHome = 0;
-          if (runAway > maxRunAway) maxRunAway = runAway;
-        }
-        prevHomeScore = hScore; prevAwayScore = aScore;
+      let currentState = diff > 0 ? 1 : (diff < 0 ? -1 : 0);
+      if (currentState !== 0 && prevLeadState !== 0 && currentState !== prevLeadState) {
+        leadChanges++;
       }
+      if (currentState !== 0) prevLeadState = currentState;
 
-      // 更新圖表
-      leadChart.data.datasets[0].data = chartPoints;
-      leadChart.data.datasets[1].data = chartPoints;
-      leadChart.update();
+      const nextSec = (i < plays.length - 1) ? parseToElapsedSec(plays[i+1].quarter, plays[i+1].time) : sec;
+      const duration = nextSec - sec;
+      if (diff > 0) timeLeadingHome += duration;
+      else if (diff < 0) timeLeadingAway += duration;
 
-      // 更新畫面數字
-      document.getElementById('val-lead-home').innerText = maxLeadHome;
-      document.getElementById('val-lead-away').innerText = maxLeadAway;
-      document.getElementById('val-run-home').innerText = `${maxRunHome}-0`;
-      document.getElementById('val-run-away').innerText = `${maxRunAway}-0`;
-      document.getElementById('val-time-home').innerText = formatMMSS(timeLeadingHome);
-      document.getElementById('val-time-away').innerText = formatMMSS(timeLeadingAway);
-      document.getElementById('val-lead-changes').innerText = leadChanges;
+      const dH = hScore - prevHomeScore;
+      const dA = aScore - prevAwayScore;
 
-    } catch (err) {
-      console.error("API 載入失敗或數據處理異常:", err);
+      if (dH > 0) {
+        runHome += dH; runAway = 0;
+        if (runHome > maxRunHome) maxRunHome = runHome;
+      }
+      if (dA > 0) {
+        runAway += dA; runHome = 0;
+        if (runAway > maxRunAway) maxRunAway = runAway;
+      }
+      prevHomeScore = hScore; prevAwayScore = aScore;
+    }
+
+    // 更新圖表數據
+    leadChart.data.datasets[0].data = chartPoints;
+    leadChart.data.datasets[1].data = chartPoints;
+    leadChart.update();
+
+    // 更新畫面數字
+    document.getElementById('val-lead-home').innerText = maxLeadHome;
+    document.getElementById('val-lead-away').innerText = maxLeadAway;
+    document.getElementById('val-run-home').innerText = `${maxRunHome}-0`;
+    document.getElementById('val-run-away').innerText = `${maxRunAway}-0`;
+    document.getElementById('val-time-home').innerText = formatMMSS(timeLeadingHome);
+    document.getElementById('val-time-away').innerText = formatMMSS(timeLeadingAway);
+    document.getElementById('val-lead-changes').innerText = leadChanges;
+  }
+
+  // 4. 抓取 API 或載入 Demo 數據控制機制
+  async function loadData() {
+    if (apiUrl) {
+      try {
+        const res = await fetch(apiUrl);
+        const plays = await res.json();
+        processAndRenderData(plays);
+      } catch (err) {
+        console.error("API 載入失敗:", err);
+      }
+    } else {
+      // Demo 假資料 (當無 API 網址時自動執行)
+      const demoPlayByPlay = [
+        { quarter: 'Q1', time: '10:00', home_team_score: 0, away_team_score: 0 },
+        { quarter: 'Q1', time: '07:30', home_team_score: 6, away_team_score: 2 },
+        { quarter: 'Q1', time: '03:15', home_team_score: 10, away_team_score: 14 },
+        { quarter: 'Q2', time: '08:00', home_team_score: 22, away_team_score: 20 },
+        { quarter: 'Q2', time: '01:30', home_team_score: 30, away_team_score: 36 },
+        { quarter: 'Q3', time: '06:45', home_team_score: 48, away_team_score: 42 },
+        { quarter: 'Q3', time: '00:30', home_team_score: 55, away_team_score: 55 },
+        { quarter: 'Q4', time: '05:00', home_team_score: 68, away_team_score: 62 },
+        { quarter: 'Q4', time: '00:00', home_team_score: 75, away_team_score: 71 }
+      ];
+      processAndRenderData(demoPlayByPlay);
     }
   }
 
-  // 開頭執行並設定每 3 秒自動輪巡更新一次
-  fetchAndCalculate();
-  setInterval(fetchAndCalculate, 3000);
+  // 首次執行並設定自動更新
+  loadData();
+  if (apiUrl) {
+    setInterval(loadData, 3000);
+  }
 </script>
 
 </body>
