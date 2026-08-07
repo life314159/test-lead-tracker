@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   try {
     // 💡 這裡填入你們聯賽真實 API 的基礎網址
     // 假設原網址是：https://api.yourleague.com/api/opendata/GetPlayByPlayShow?game_id=123
-    const targetApiUrl = `https://api.yourleague.com/api/opendata/GetPlayByPlayShow?game_id=${gameId}`;
+    const targetApiUrl = `https://uba.tw/Api/api/opendata/GetPlayByPlayShow?game_id=${gameId}`;
 
     const response = await fetch(targetApiUrl);
     
